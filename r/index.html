@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+<title>RoxPB result</title>
+<style>
+  :root { --bg:#101114; --panel:#17181d; --line:#2a2c33; --white:#fff; --grey:#aaacb2; --dim:#6e7076;
+          --blue:#00aaff; --purple:#aa00ff; --orange:#ff5500; --green:#22dd66; --red:#ff4d4d; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--white);
+         font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         -webkit-text-size-adjust:100%; }
+  main { max-width:640px; margin:0 auto; padding:20px 16px 40px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:600; font-size:18px; }
+  .brand svg { width:34px; height:34px; }
+  h1 { font-size:26px; line-height:1.15; margin:22px 0 4px; }
+  .meta { color:var(--grey); font-size:15px; }
+  .finish { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin:18px 0 6px; }
+  .finish .big { font-size:54px; font-weight:700; letter-spacing:-1px; font-variant-numeric:tabular-nums; }
+  .finish .vs { font-size:19px; font-weight:600; }
+  .label { color:var(--grey); font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+  table { width:100%; border-collapse:collapse; margin-top:18px; font-variant-numeric:tabular-nums; }
+  th { color:var(--grey); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+       text-align:right; padding:8px 6px; border-bottom:1px solid var(--line); }
+  th:first-child, td:first-child { text-align:left; padding-left:0; }
+  td { padding:9px 6px; text-align:right; font-size:16px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  td:first-child { white-space:normal; }
+  td:last-child, th:last-child { padding-right:0; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:9px; vertical-align:middle; }
+  tr.st td:first-child { font-weight:600; }
+  tr.total td { font-weight:700; border-bottom:none; }
+  tr.first-total td { border-top:2px solid var(--grey); }
+  .good { color:var(--green); } .bad { color:var(--red); } .none { color:var(--dim); }
+  .actions { display:flex; gap:10px; margin-top:24px; flex-wrap:wrap; }
+  button { flex:1 1 150px; font:inherit; font-weight:600; font-size:16px; padding:14px 16px; border-radius:12px;
+           border:1px solid var(--line); background:var(--panel); color:var(--white); cursor:pointer; }
+  button.primary { background:var(--blue); border-color:var(--blue); color:#00121c; }
+  .note { color:var(--grey); font-size:13.5px; line-height:1.5; margin-top:22px; }
+  .note p { margin:0 0 8px; }
+  .empty { margin-top:40px; }
+  .empty h1 { font-size:30px; }
+  .empty p { color:var(--grey); font-size:17px; line-height:1.5; }
+  #status { color:var(--grey); font-size:14px; margin-top:10px; min-height:20px; }
+  @media (max-width:380px) { td { font-size:14.5px; padding:8px 4px; } .finish .big { font-size:46px; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#00aaff" stroke-width="12" stroke-dasharray="84 168" transform="rotate(-90 50 50)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#aa00ff" stroke-width="12" stroke-dasharray="84 168" transform="rotate(30 50 50)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#ff5500" stroke-width="12" stroke-dasharray="84 168" transform="rotate(150 50 50)"/>
+      <text x="50" y="61" text-anchor="middle" font-size="30" font-weight="700" fill="#fff" font-family="Arial,Helvetica,sans-serif">PB</text>
+    </svg>
+    <span>RoxPB</span>
+  </div>
+
+  <div id="result" hidden>
+    <h1 id="name"></h1>
+    <div class="meta" id="meta"></div>
+    <div class="finish">
+      <div><div class="label" id="finLabel">Total time</div><div class="big" id="fin"></div></div>
+      <div class="vs" id="vs"></div>
+    </div>
+    <table>
+      <thead><tr id="head"></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="actions">
+      <button class="primary" id="save">Save image</button>
+      <button id="copy">Copy link</button>
+    </div>
+    <div id="status" role="status"></div>
+    <div class="note">
+      <p>Times come from the LAP presses on your watch, so they can differ a little from official timing.</p>
+      <p>Nothing is stored. This result lives in the link itself: keep the link, or save the image, to see it again.</p>
+      <p>RoxPB is an independent app and is not affiliated with HYROX.</p>
+    </div>
+  </div>
+
+  <div id="empty" class="empty" hidden>
+    <h1>No result to show</h1>
+    <p>This page shows a result sent from RoxPB on a Garmin watch. On the watch, open a result in History and choose <strong>View on phone</strong>.</p>
+    <p>RoxPB is an independent app and is not affiliated with HYROX.</p>
+  </div>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var STATIONS = ['SkiErg', 'Sled Push', 'Sled Pull', 'Burpee Broad Jumps', 'Row', 'Farmers Carry', 'Sandbag Lunges', 'Wall Balls'];
+  var TYPES = ['Race', 'Simulation', 'Training', 'Run'];
+  var C = { run: '#00aaff', rox: '#aa00ff', st: '#ff5500', green: '#22dd66', red: '#ff4d4d',
+            bg: '#101114', white: '#ffffff', grey: '#aaacb2', dim: '#6e7076', line: '#2a2c33' };
+
+  function $(id) { return document.getElementById(id); }
+
+  // the result: after the "#" (never sent to a server), or after a "?" if the phone moved it
+  function params() {
+    var raw = location.hash.length > 1 ? location.hash.substring(1) : location.search.substring(1);
+    var out = {};
+    raw.split('&').forEach(function (kv) {
+      var i = kv.indexOf('=');
+      if (i > 0) {
+        var v = kv.substring(i + 1);
+        try { v = decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) { /* keep as it came */ }
+        out[kv.substring(0, i)] = v;
+      }
+    });
+    return out;
+  }
+
+  function int(s) { var n = parseInt(s, 10); return isFinite(n) ? n : null; }
+
+  function fmt(secs) {
+    secs = Math.abs(Math.round(secs));
+    var h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    return (h > 0 ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+  // negative = faster than the comparison
+  function signed(d) {
+    if (d === null) { return { text: '–', cls: 'none' }; }
+    if (d === 0) { return { text: '0:00', cls: 'none' }; }
+    return { text: (d < 0 ? '−' : '+') + fmt(d), cls: d < 0 ? 'good' : 'bad' };
+  }
+
+  function parse(p) {
+    if (p.v !== '1' || !p.g) { return null; }
+    var type = int(p.y); if (type === null || type < 0 || type > 3) { type = 0; }
+    var labels = (p.l || '').split('|');
+    var rows = [];
+    p.g.split('_').forEach(function (cell, i) {
+      var f = cell.split('.');
+      if (f.length < 2) { return; }
+      var code = f[0], kind = code.charAt(0), n = int(code.substring(1));
+      var t = int(f[1]); if (t === null) { return; }
+      var name;
+      if (kind === 'r') { name = 'Run ' + n; }
+      else if (kind === 's') { name = STATIONS[n - 1] || ('Station ' + n); }
+      else if (kind === 'x') { name = 'Roxzone'; }
+      else { name = (labels[rows.length] || ('Rep ' + (rows.length + 1))).replace(/\s{2,}/g, ' · '); kind = 'p'; }
+      var b = f.length > 4 ? int(f[4]) : null;
+      rows.push({ kind: kind, name: name, t: t, d: f.length > 2 ? int(f[2]) : null,
+                  hr: f.length > 3 ? int(f[3]) : null, vb: b === null ? null : t - b });
+    });
+    if (!rows.length) { return null; }
+    return { type: type, name: (p.n || TYPES[type]).substring(0, 40), date: p.dt || '',
+             fin: int(p.f), delta: int(p.dl), rows: rows, metres: int(p.m) };
+  }
+
+  function sum(rows, key) {
+    var any = false, s = 0;
+    rows.forEach(function (r) { if (r[key] !== null && r[key] !== undefined) { any = true; s += r[key]; } });
+    return any ? s : null;
+  }
+
+  function totals(res) {
+    var out = [];
+    function add(name, rows) {
+      if (rows.length) { out.push({ name: name, t: sum(rows, 't'), d: sum(rows, 'd'), vb: rows.every(function (r) { return r.vb !== null; }) ? sum(rows, 'vb') : null }); }
+    }
+    var runs = res.rows.filter(function (r) { return r.kind === 'r'; });
+    var sts = res.rows.filter(function (r) { return r.kind === 's'; });
+    if (res.type !== 3) {
+      add('Run total', runs);
+      add('Station total', sts);
+      if (runs.length > 1) {
+        var best = runs.reduce(function (a, b) { return b.t < a.t ? b : a; });
+        out.push({ name: 'Best run (' + best.name + ')', t: best.t, d: null, vb: null, plain: true });
+      }
+    }
+    return out;
+  }
+
+  function niceDate(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (!m) { return s; }
+    var mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][int(m[2]) - 1];
+    return int(m[3]) + ' ' + mon + ' ' + m[1];
+  }
+
+  function cols(res) {
+    var c = [{ key: 'd', head: res.type === 3 ? 'vs target' : 'vs plan' }];
+    if (res.rows.some(function (r) { return r.vb !== null; })) { c.push({ key: 'vb', head: 'vs best' }); }
+    if (res.rows.some(function (r) { return r.hr; })) { c.push({ key: 'hr', head: 'HR' }); }
+    return c;
+  }
+
+  function td(text, cls) { var e = document.createElement('td'); e.textContent = text; if (cls) { e.className = cls; } return e; }
+
+  function render(res) {
+    document.title = 'RoxPB · ' + res.name;
+    $('name').textContent = res.name;
+    $('meta').textContent = TYPES[res.type] + (res.date ? ' · ' + niceDate(res.date) : '') +
+      (res.type === 3 && res.metres ? ' · ' + (res.metres / 1000).toFixed(2) + ' km' : '');
+    $('fin').textContent = res.fin !== null ? fmt(res.fin) : fmt(sum(res.rows, 't'));
+    var vs = signed(res.delta);
+    if (res.delta !== null) {
+      $('vs').textContent = res.delta === 0 ? 'On plan' : fmt(res.delta) + (res.delta < 0 ? ' ahead' : ' behind') + (res.type === 3 ? ' of target' : ' of plan');
+      $('vs').className = 'vs ' + vs.cls;
+    }
+    var cs = cols(res);
+    var head = $('head');
+    ['Split', 'Time'].concat(cs.map(function (c) { return c.head; })).forEach(function (h) {
+      var th = document.createElement('th'); th.textContent = h; head.appendChild(th);
+    });
+    var body = $('rows');
+    function line(r, cls) {
+      var tr = document.createElement('tr'); if (cls) { tr.className = cls; }
+      var first = document.createElement('td');
+      if (r.kind) {
+        var dot = document.createElement('span'); dot.className = 'dot';
+        dot.style.background = r.kind === 's' ? C.st : (r.kind === 'x' ? C.rox : C.run);
+        first.appendChild(dot);
+      }
+      first.appendChild(document.createTextNode(r.name));
+      tr.appendChild(first);
+      tr.appendChild(td(fmt(r.t)));
+      cs.forEach(function (c) {
+        if (c.key === 'hr') { tr.appendChild(td(r.hr ? String(r.hr) : (r.plain || !r.kind ? '' : '–'), r.hr ? '' : 'none')); }
+        else if (r.plain) { tr.appendChild(td('')); }
+        else { var s = signed(r[c.key] === undefined ? null : r[c.key]); tr.appendChild(td(s.text, s.cls)); }
+      });
+      body.appendChild(tr);
+    }
+    res.rows.forEach(function (r) { line(r, r.kind === 's' ? 'st' : ''); });
+    totals(res).forEach(function (t, i) { line(t, 'total' + (i === 0 ? ' first-total' : '')); });
+    $('result').hidden = false;
+  }
+
+  // ---- the image: 1080 x 1350, drawn here on the phone ----
+  function draw(res) {
+    var W = 1080, H = 1350, cv = document.createElement('canvas');
+    cv.width = W; cv.height = H;
+    var g = cv.getContext('2d');
+    var F = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+    g.fillStyle = C.bg; g.fillRect(0, 0, W, H);
+    var L = 64, R = W - 64;
+
+    // brand
+    var cx = L + 30, cy = 84, rad = 24;
+    [[C.run, -90], [C.rox, 30], [C.st, 150]].forEach(function (s) {
+      g.beginPath(); g.strokeStyle = s[0]; g.lineWidth = 9;
+      g.arc(cx, cy, rad, (s[1] + 4) * Math.PI / 180, (s[1] + 116) * Math.PI / 180); g.stroke();
+    });
+    g.fillStyle = C.white; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = '700 19px ' + F; g.fillText('PB', cx, cy + 1);
+    g.textAlign = 'left'; g.font = '600 34px ' + F; g.fillText('RoxPB', L + 72, cy + 1);
+    g.textAlign = 'right'; g.fillStyle = C.grey; g.font = '400 26px ' + F;
+    g.fillText(TYPES[res.type] + (res.date ? ' · ' + niceDate(res.date) : ''), R, cy + 1);
+
+    // title and finish
+    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = C.white;
+    g.font = '700 46px ' + F; g.fillText(fit(g, res.name, R - L), L, 186);
+    g.font = '700 104px ' + F;
+    var fin = res.fin !== null ? fmt(res.fin) : fmt(sum(res.rows, 't'));
+    g.fillText(fin, L - 4, 300);
+    if (res.delta !== null) {
+      var s = signed(res.delta);
+      g.fillStyle = s.cls === 'good' ? C.green : (s.cls === 'bad' ? C.red : C.grey);
+      g.font = '600 34px ' + F;
+      g.fillText(res.delta === 0 ? 'On plan' : fmt(res.delta) + (res.delta < 0 ? ' ahead' : ' behind') + (res.type === 3 ? ' of target' : ' of plan'),
+                 L + g.measureText('').width + finWidth(g, fin, F) + 28, 300);
+    }
+
+    // table
+    var cs = cols(res), tot = totals(res);
+    var n = res.rows.length + tot.length;
+    var top = 372, bottom = H - 96;
+    var rh = Math.min(50, Math.floor((bottom - top - 44) / n));
+    var fs = Math.max(18, Math.min(30, Math.floor(rh * 0.6)));
+    var colW = cs.length >= 3 ? 150 : 170;
+    var xs = []; var x = R;
+    for (var i = cs.length - 1; i >= 0; i--) { xs[i] = x; x -= (cs[i].key === 'hr' ? 110 : colW); }
+    var xTime = x;
+    g.font = '600 20px ' + F; g.fillStyle = C.grey; g.textAlign = 'left';
+    g.fillText('SPLIT', L, top);
+    g.textAlign = 'right'; g.fillText('TIME', xTime, top);
+    cs.forEach(function (c, i) { g.fillText(c.head.toUpperCase(), xs[i], top); });
+    g.strokeStyle = C.line; g.lineWidth = 2; g.beginPath(); g.moveTo(L, top + 14); g.lineTo(R, top + 14); g.stroke();
+
+    var y = top + 14;
+    function row(r, bold, rule) {
+      if (rule) { g.strokeStyle = C.grey; g.lineWidth = 2; g.beginPath(); g.moveTo(L, y + 2); g.lineTo(R, y + 2); g.stroke(); y += 6; }
+      y += rh;
+      var base = y - Math.round(rh * 0.3);
+      var nx = L;
+      if (r.kind) {
+        g.fillStyle = r.kind === 's' ? C.st : (r.kind === 'x' ? C.rox : C.run);
+        g.beginPath(); g.arc(L + 7, base - fs * 0.33, 7, 0, Math.PI * 2); g.fill();
+        nx = L + 28;
+      }
+      g.fillStyle = C.white; g.textAlign = 'left';
+      g.font = ((bold || r.kind === 's') ? '600 ' : '400 ') + fs + 'px ' + F;
+      g.fillText(fit(g, r.name, xTime - 130 - nx), nx, base);
+      g.textAlign = 'right'; g.font = (bold ? '700 ' : '500 ') + fs + 'px ' + F;
+      g.fillText(fmt(r.t), xTime, base);
+      cs.forEach(function (c, i) {
+        if (c.key === 'hr') {
+          if (r.hr) { g.fillStyle = C.white; g.fillText(String(r.hr), xs[i], base); }
+          else if (r.kind && !r.plain) { g.fillStyle = C.dim; g.fillText('–', xs[i], base); }
+        } else if (!r.plain) {
+          var s = signed(r[c.key] === undefined ? null : r[c.key]);
+          g.fillStyle = s.cls === 'good' ? C.green : (s.cls === 'bad' ? C.red : C.dim);
+          g.fillText(s.text, xs[i], base);
+        }
+      });
+      if (!bold) { g.strokeStyle = C.line; g.lineWidth = 1; g.beginPath(); g.moveTo(L, y); g.lineTo(R, y); g.stroke(); }
+    }
+    res.rows.forEach(function (r) { row(r, false, false); });
+    tot.forEach(function (t, i) { row(t, true, i === 0); });
+
+    g.fillStyle = C.dim; g.textAlign = 'left'; g.font = '400 22px ' + F;
+    g.fillText('Timed on the watch with RoxPB for Garmin · not affiliated with HYROX', L, H - 44);
+    return cv;
+  }
+  function finWidth(g, text, F) { var keep = g.font; g.font = '700 104px ' + F; var w = g.measureText(text).width; g.font = keep; return w; }
+  function fit(g, text, max) {
+    if (g.measureText(text).width <= max) { return text; }
+    while (text.length > 3 && g.measureText(text + '…').width > max) { text = text.substring(0, text.length - 1); }
+    return text + '…';
+  }
+
+  function say(msg) { $('status').textContent = msg; }
+
+  function saveImage(res) {
+    var cv = draw(res);
+    cv.toBlob(function (blob) {
+      if (!blob) { say('Could not make the image on this phone.'); return; }
+      var name = 'roxpb-' + (res.date || 'result') + '.png';
+      var file = null;
+      try { file = new File([blob], name, { type: 'image/png' }); } catch (e) { file = null; }
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(function () { /* closed without sharing */ });
+        return;
+      }
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      say('Image downloaded.');
+    }, 'image/png');
+  }
+
+  var res = parse(params());
+  if (!res) { $('empty').hidden = false; return; }
+  render(res);
+  $('save').addEventListener('click', function () { saveImage(res); });
+  $('copy').addEventListener('click', function () {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(location.href).then(function () { say('Link copied. Keep it to open this result again.'); },
+                                                        function () { say('Copy the address from the address bar.'); });
+    } else { say('Copy the address from the address bar.'); }
+  });
+  window.__roxpbDraw = function () { return draw(res).toDataURL('image/png'); };   // used by the page's own tests
+})();
+</script>
+</body>
+</html>

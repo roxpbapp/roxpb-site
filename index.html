@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="RoxPB: race pacing for Garmin watches. Ahead or behind? One button tells you.">
+<title>RoxPB: race pacing for Garmin</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; background:#101114; color:#fff; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  main { max-width:960px; margin:0 auto; padding:28px 22px 56px; }
+  .brand { display:flex; align-items:center; gap:10px; font-weight:600; font-size:20px; }
+  .brand svg { width:38px; height:38px; }
+  img { display:block; max-width:100%; height:auto; }
+  .hero { display:grid; grid-template-columns:1.2fr 1fr; gap:40px; align-items:center; margin:48px 0 24px; }
+  h1 { font-size:46px; line-height:1.08; margin:0 0 18px; letter-spacing:-.5px; }
+  h2 { font-size:28px; line-height:1.15; margin:0 0 12px; }
+  p { color:#aaacb2; font-size:18px; line-height:1.55; margin:0 0 14px; }
+  .btn { display:inline-block; margin:10px 0 6px; padding:15px 22px; border-radius:12px; background:#00aaff; color:#00121c;
+         font-weight:600; font-size:17px; text-decoration:none; }
+  a { color:#00aaff; }
+  .watch { width:100%; max-width:300px; margin:0 auto; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center; padding:44px 0; border-top:1px solid #2a2c33; }
+  .row.flip .text { order:2; }
+  .row .pic { display:flex; justify-content:center; }
+  .results { width:100%; max-width:380px; border-radius:14px; border:1px solid #2a2c33; }
+  .kicker { color:#00aaff; font-size:13px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; margin-bottom:8px; }
+  .end { text-align:center; padding:48px 0 8px; border-top:1px solid #2a2c33; }
+  .end .watch { max-width:240px; margin-bottom:22px; }
+  .small { font-size:14.5px; }
+  footer { margin-top:44px; padding-top:22px; border-top:1px solid #2a2c33; }
+  @media (max-width:720px) {
+    .hero, .row { grid-template-columns:1fr; gap:22px; }
+    .row.flip .text { order:0; }
+    h1 { font-size:36px; }
+    .hero { margin-top:32px; }
+    .watch { max-width:250px; }
+    .row { padding:34px 0; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="brand">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#00aaff" stroke-width="12" stroke-dasharray="84 168" transform="rotate(-90 50 50)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#aa00ff" stroke-width="12" stroke-dasharray="84 168" transform="rotate(30 50 50)"/>
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#ff5500" stroke-width="12" stroke-dasharray="84 168" transform="rotate(150 50 50)"/>
+      <text x="50" y="61" text-anchor="middle" font-size="30" font-weight="700" fill="#fff" font-family="Arial,Helvetica,sans-serif">PB</text>
+    </svg>
+    <span>RoxPB</span>
+  </div>
+
+  <section class="hero">
+    <div>
+      <h1>Ahead or behind? One button tells you.</h1>
+      <p>RoxPB is a Garmin watch app for HYROX-format races, simulations and training. Build a plan from your course, your running pace and a target for each station. Press LAP at every checkpoint and the watch shows how far ahead or behind you are.</p>
+      <a class="btn" href="https://apps.garmin.com/apps/6a8f56c2-2b88-4d9a-a8ea-77e0f35159d0">Get RoxPB on the Connect IQ Store</a>
+    </div>
+    <img class="watch" src="img/race.png" width="560" height="560" alt="Watch screen on run 2: 11 seconds ahead of plan, heart rate 162">
+  </section>
+
+  <section class="row">
+    <div class="text">
+      <div class="kicker">Three ways to train</div>
+      <h2>Race, Sim / Training or Run</h2>
+      <p>Pick one each time you open the app. Race paces your event against your plan. Sim / Training builds a session from any runs and stations. Run paces intervals, threshold, hills and continuous runs by pace, speed or heart rate, outdoors or on a treadmill.</p>
+    </div>
+    <div class="pic"><img class="watch" src="img/activity.png" width="478" height="478" alt="Activity menu with Race, Sim / Training and Run"></div>
+  </section>
+
+  <section class="row flip">
+    <div class="text">
+      <div class="kicker">Plan your race</div>
+      <h2>See what your pace gets you</h2>
+      <p>Set your running pace and a time for each of the eight stations, and RoxPB works out your estimated finish. Change one number and the estimate moves with it. Or open a past result and choose "Use these settings" to start from a race that went well.</p>
+    </div>
+    <div class="pic"><img class="watch" src="img/setup.png" width="478" height="478" alt="Race setup showing pace 4:30 per km and estimated finish 1:10:24"></div>
+  </section>
+
+  <section class="row">
+    <div class="text">
+      <div class="kicker">After the finish</div>
+      <h2>Every split, on your phone</h2>
+      <p>Open any result from your watch to see the full breakdown: each run and station against your plan and your best, with heart rate, plus your run, station and Roxzone totals. Save it as an image to keep or share.</p>
+      <p class="small">The result travels inside the link and is drawn on your own phone. Nothing is stored.</p>
+    </div>
+    <div class="pic"><img class="results" src="img/results.png" width="720" height="900" alt="Results image listing every run and station with time, versus plan, versus best and heart rate"></div>
+  </section>
+
+  <section class="end">
+    <img class="watch" src="img/congrats.png" width="478" height="478" alt="Finish screen: CONGRATS, 42 seconds ahead, total time 1:07:33">
+    <h2>The screen you trained for.</h2>
+    <p>Available for Forerunner, fenix, epix, Venu, vivoactive and more.</p>
+    <a class="btn" href="https://apps.garmin.com/apps/6a8f56c2-2b88-4d9a-a8ea-77e0f35159d0">Get RoxPB on the Connect IQ Store</a>
+  </section>
+
+  <footer>
+    <p class="small">Times shown are examples.</p>
+    <p class="small">Questions or problems: <a href="mailto:roxpb.app@gmail.com">roxpb.app@gmail.com</a></p>
+    <p class="small">Privacy: this site stores nothing and uses no cookies or tracking.</p>
+    <p class="small">RoxPB is an independent app and is not affiliated with HYROX.</p>
+  </footer>
+</main>
+</body>
+</html>
