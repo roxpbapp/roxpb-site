@@ -75,6 +75,7 @@
       <button id="copy">Copy link</button>
     </div>
     <div id="status" role="status"></div>
+    <img id="shot" alt="Your result as an image" hidden style="width:100%;height:auto;margin-top:12px;border-radius:12px;border:1px solid var(--line)">
     <div class="note">
       <p>Times come from the LAP presses on your watch, so they can differ a little from official timing.</p>
       <p>Nothing is stored. This result lives in the link itself: keep the link, or save the image, to see it again.</p>
@@ -142,14 +143,14 @@
       if (kind === 'r') { name = 'Run ' + n; }
       else if (kind === 's') { name = STATIONS[n - 1] || ('Station ' + n); }
       else if (kind === 'x') { name = 'Roxzone'; }
-      else { name = (labels[rows.length] || ('Rep ' + (rows.length + 1))).replace(/\s{2,}/g, ' · '); kind = 'p'; }
+      else { name = (labels[rows.length] || ('Split ' + (rows.length + 1))).replace(/\s{2,}/g, ' · '); kind = 'p'; }
       var b = f.length > 4 ? int(f[4]) : null;
       rows.push({ kind: kind, name: name, t: t, d: f.length > 2 ? int(f[2]) : null,
                   hr: f.length > 3 ? int(f[3]) : null, vb: b === null ? null : t - b });
     });
     if (!rows.length) { return null; }
     return { type: type, name: (p.n || TYPES[type]).substring(0, 40), date: p.dt || '',
-             fin: int(p.f), delta: int(p.dl), rows: rows, metres: int(p.m) };
+             fin: int(p.f), delta: int(p.dl), rows: rows, metres: int(p.m), part: p.p === '1' };
   }
 
   function sum(rows, key) {
@@ -183,8 +184,20 @@
     return int(m[3]) + ' ' + mon + ' ' + m[1];
   }
 
+  // a run paced by heart rate has no ahead or behind: every difference is zero
+  function judged(res) {
+    return res.type !== 3 || (res.delta !== null && res.delta !== 0) || res.rows.some(function (r) { return r.d; });
+  }
+
+  function vsText(res) {
+    if (res.delta === null || !judged(res)) { return ''; }
+    if (res.delta === 0) { return res.type === 3 ? 'On target' : 'On plan'; }
+    return fmt(res.delta) + (res.delta < 0 ? ' ahead' : ' behind') + (res.type === 3 ? ' of target' : ' of plan');
+  }
+
   function cols(res) {
-    var c = [{ key: 'd', head: res.type === 3 ? 'vs target' : 'vs plan' }];
+    var c = [];
+    if (judged(res)) { c.push({ key: 'd', head: res.type === 3 ? 'vs target' : 'vs plan' }); }
     if (res.rows.some(function (r) { return r.vb !== null; })) { c.push({ key: 'vb', head: 'vs best' }); }
     if (res.rows.some(function (r) { return r.hr; })) { c.push({ key: 'hr', head: 'HR' }); }
     return c;
@@ -195,14 +208,12 @@
   function render(res) {
     document.title = 'RoxPB · ' + res.name;
     $('name').textContent = res.name;
-    $('meta').textContent = TYPES[res.type] + (res.date ? ' · ' + niceDate(res.date) : '') +
+    $('meta').textContent = TYPES[res.type] + (res.part ? ' (stopped early)' : '') + (res.date ? ' · ' + niceDate(res.date) : '') +
       (res.type === 3 && res.metres ? ' · ' + (res.metres / 1000).toFixed(2) + ' km' : '');
     $('fin').textContent = res.fin !== null ? fmt(res.fin) : fmt(sum(res.rows, 't'));
     var vs = signed(res.delta);
-    if (res.delta !== null) {
-      $('vs').textContent = res.delta === 0 ? 'On plan' : fmt(res.delta) + (res.delta < 0 ? ' ahead' : ' behind') + (res.type === 3 ? ' of target' : ' of plan');
-      $('vs').className = 'vs ' + vs.cls;
-    }
+    $('vs').textContent = vsText(res);
+    $('vs').className = 'vs ' + vs.cls;
     var cs = cols(res);
     var head = $('head');
     ['Split', 'Time'].concat(cs.map(function (c) { return c.head; })).forEach(function (h) {
@@ -251,7 +262,7 @@
     g.font = '700 19px ' + F; g.fillText('PB', cx, cy + 1);
     g.textAlign = 'left'; g.font = '600 34px ' + F; g.fillText('RoxPB', L + 72, cy + 1);
     g.textAlign = 'right'; g.fillStyle = C.grey; g.font = '400 26px ' + F;
-    g.fillText(TYPES[res.type] + (res.date ? ' · ' + niceDate(res.date) : ''), R, cy + 1);
+    g.fillText(TYPES[res.type] + (res.part ? ' (stopped early)' : '') + (res.date ? ' · ' + niceDate(res.date) : ''), R, cy + 1);
 
     // title and finish
     g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = C.white;
@@ -259,12 +270,11 @@
     g.font = '700 104px ' + F;
     var fin = res.fin !== null ? fmt(res.fin) : fmt(sum(res.rows, 't'));
     g.fillText(fin, L - 4, 300);
-    if (res.delta !== null) {
+    if (vsText(res)) {
       var s = signed(res.delta);
       g.fillStyle = s.cls === 'good' ? C.green : (s.cls === 'bad' ? C.red : C.grey);
       g.font = '600 34px ' + F;
-      g.fillText(res.delta === 0 ? 'On plan' : fmt(res.delta) + (res.delta < 0 ? ' ahead' : ' behind') + (res.type === 3 ? ' of target' : ' of plan'),
-                 L + g.measureText('').width + finWidth(g, fin, F) + 28, 300);
+      g.fillText(vsText(res), L + finWidth(g, fin, F) + 28, 300);
     }
 
     // table
@@ -272,7 +282,7 @@
     var n = res.rows.length + tot.length;
     var top = 372, bottom = H - 96;
     var rh = Math.min(50, Math.floor((bottom - top - 44) / n));
-    var fs = Math.max(18, Math.min(30, Math.floor(rh * 0.6)));
+    var fs = Math.max(12, Math.min(30, Math.floor(rh * 0.6)));
     var colW = cs.length >= 3 ? 150 : 170;
     var xs = []; var x = R;
     for (var i = cs.length - 1; i >= 0; i--) { xs[i] = x; x -= (cs[i].key === 'hr' ? 110 : colW); }
@@ -291,7 +301,7 @@
       var nx = L;
       if (r.kind) {
         g.fillStyle = r.kind === 's' ? C.st : (r.kind === 'x' ? C.rox : C.run);
-        g.beginPath(); g.arc(L + 7, base - fs * 0.33, 7, 0, Math.PI * 2); g.fill();
+        g.beginPath(); g.arc(L + 7, base - fs * 0.33, Math.min(7, fs * 0.28), 0, Math.PI * 2); g.fill();
         nx = L + 28;
       }
       g.fillStyle = C.white; g.textAlign = 'left';
@@ -338,13 +348,18 @@
         navigator.share({ files: [file] }).catch(function () { /* closed without sharing */ });
         return;
       }
+      // no share sheet here (some in-app browsers): show the picture so it can be saved by hand
+      var url = URL.createObjectURL(blob);
+      var img = $('shot');
+      img.src = url; img.hidden = false;
       var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob); a.download = name;
+      a.href = url; a.download = name;
       document.body.appendChild(a); a.click(); a.remove();
-      say('Image downloaded.');
+      say('If the image did not download, press and hold the picture below and choose Save.');
     }, 'image/png');
   }
 
+  window.addEventListener('hashchange', function () { location.reload(); });   // another result opened in this tab
   var res = parse(params());
   if (!res) { $('empty').hidden = false; return; }
   render(res);
